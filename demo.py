@@ -46,6 +46,7 @@ class block:
     def setting(self, x, y, data):
         self.x, self.y = x, y
         self.data = data
+
 class map:
     def __init__(self):
         self.path = '리소스\\bg1.txt'
@@ -109,15 +110,16 @@ class mario:
                     self.dir -= 1
                 elif event.key == SDLK_SPACE:
                     self.state = 'jump'
-                    if self.j == 0:
-                        self.j = 1
-                    elif self.j  == 1:
-                        self.j =2
+                    self.y += 50
+
+
             elif event.type == SDL_KEYUP:
                 if event.key == SDLK_RIGHT:
                     self.dir -= 1
                 elif event.key == SDLK_LEFT:
                     self.dir += 1
+                elif event.key == SDLK_SPACE:
+                    self.y-=50
                 self.state = 'idle'
 
 
@@ -127,31 +129,6 @@ class mario:
             self.frame = (self.frame+1) % 4
             delay(0.01)
 
-        if self.state == 'jump':
-            if self.j > 0:
-                if self.j == 2:
-                    self.v = 7
-
-                # 역학공식 계산 (F). F = 0.5 * mass * velocity^2.
-                if self.v > 0:
-
-                    F = (0.5 * self.m * (self.v * self.v))
-                else:
-
-                    F = -(0.5 * self.m * (self.v * self.v))
-
-
-                self.y += round(F)
-
-
-                self.v -= 1
-
-
-                if self.y > 110:
-                    self.y = 110
-                    self.j = 0
-                    self.state ='idle'
-                    self.v = 7
 
 
     def draw(self):
@@ -167,6 +144,7 @@ open_canvas(1280, 600)
 Mario = mario()
 Map = map()
 Map.setting()
+
 
 while Mario.running:
 
