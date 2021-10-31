@@ -14,7 +14,6 @@ class block:
         self.Qblock = load_image('리소스\\Qblock.png')
         self.gumba = load_image('리소스\\enemy1.png')
 
-
         self.x, self.y = 0, 0
         self.data = '0'
 
@@ -68,12 +67,28 @@ class map:
                 continue
 
             b =block()
-
             b.setting(w - 20, h - 40, a)
             self.blocks.append(b)
             w += 40
 
         bgdata.close()
+    def camera(self, x):
+        w, h = 0, 610
+        bgdata = open(self.path, 'r')
+        i = bgdata.read()
+        for a in i:
+            if a == '\n':
+                w = 0
+                h -= 40
+                continue
+
+            b = block()
+            b.setting(w - x, h - 40, a)
+            self.blocks.append(b)
+            w += 40
+
+        bgdata.close()
+
 
 class mario:
     def __init__(self):
@@ -145,12 +160,17 @@ Mario = mario()
 Map = map()
 Map.setting()
 
+x=10
 
 while Mario.running:
 
     clear_canvas()
     Mario.handle_events()
     Mario.update()
+    while(x<100):
+        Map.camera(x)
+        x+=10
+        delay(0.01)
     Map.draw()
     Mario.draw()
     update_canvas()
