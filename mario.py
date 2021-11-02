@@ -13,7 +13,11 @@ class mario:
         self.w = 40  #캐릭터 크기
         self.h = 80
         self.running = True #게임 러닝
-        
+        self.isjump = 0
+        self.power = 10
+        self.pd = 0 #power dir
+
+
 
 
 
@@ -33,7 +37,9 @@ class mario:
                     self.d = 0
                     self.dir -= 1
                 elif event.key == SDLK_SPACE:
-                   pass
+                    self.isjump = 1
+                    self.pd = 1
+
             elif event.type == SDL_KEYUP:
                 if event.key == SDLK_RIGHT:
                     self.dir -= 1
@@ -43,11 +49,22 @@ class mario:
                     self.speed = 1
 
     def update(self):
-
         if self.speed < 10:
             self.speed += 0.2
+        if self.isjump:
+            if self.power < 20:
+                self.power += 1
+            if self.y >= 210:
+                self.isjump = 0
+        else:
+            if self.y <= 110:
+                self.y = 110
+                self.pd = 0
+            else:
+                self.pd = -1
 
         self.x += self.dir * self.speed
+        self.y += self.pd * self.power
 
 
         # if self.state == 'run':
