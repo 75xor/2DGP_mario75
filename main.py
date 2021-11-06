@@ -8,7 +8,6 @@ Mario = mario()
 current_time = time.time()
 Map = map()
 Map.setting()
-
 while Mario.running:
 
     clear_canvas()

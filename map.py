@@ -21,13 +21,27 @@ class map:
                 continue
 
             b =obj.block()
-
-
             b.setting(w - 20, h - 40, a)
             self.blocks.append(b)
             w += 40
-
         bgdata.close()
+
+    def update(self, mx):
+        w, h = 0, 610
+        bgdata = open(self.path, 'r')
+        i = bgdata.read()
+        for a in i:
+            if a == '\n':
+                w = 0
+                h -= 40
+                continue
+
+            b = obj.block()
+            b.setting(w - mx, h - 40, a)
+            self.blocks.append(b)
+            w += 40
+        bgdata.close()
+
 
 def main():
     test = True
