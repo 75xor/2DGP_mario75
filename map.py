@@ -1,14 +1,13 @@
-import obj
+from block import *
 from pico2d import *
-class map:
+class Map:
     def __init__(self):
         self.path = '리소스\\bg1.txt'
         self.blocks = []
 
     def draw(self):
-        for block in self.blocks:
-            block.draw()
-
+        for b in self.blocks:
+            b.draw()
 
     def setting(self):
         w, h = 0, 610
@@ -19,39 +18,29 @@ class map:
                 w = 0
                 h -= 40
                 continue
-
-            b =obj.block()
-            b.setting(w - 20, h - 40, a)
-            self.blocks.append(b)
+            else:
+                b = Block()
+                b.setting(w - 20, h - 40, a)
+                self.blocks.append(b)
             w += 40
         bgdata.close()
 
-    def update(self, mx):
-        w, h = 0, 610
-        bgdata = open(self.path, 'r')
-        i = bgdata.read()
-        for a in i:
-            if a == '\n':
-                w = 0
-                h -= 40
-                continue
-
-            b = obj.block()
-            b.setting(w - mx, h - 40, a)
-            self.blocks.append(b)
-            w += 40
-        bgdata.close()
-
+    def update(self):
+        pass
+    def get_bb(self):
+        for b in self.blocks:
+            b.get_bb()
 
 def main():
-    test = True
-    open_canvas(1280, 600)
-    bg1 = map()
-    bg1.setting()
-    while test:
+
+    s = Map()
+    s.setting()
+    while(1):
         clear_canvas()
-        bg1.draw()
+        s.draw()
         update_canvas()
+
+
 
 
 
