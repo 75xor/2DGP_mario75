@@ -5,20 +5,21 @@ import os
 from pico2d import *
 import game_framework
 import game_world
-
+import ending
 from boy import Boy
 from map import Map
-from ball import Ball, BigBall
+from enemy import Enemy
+from ball import Ball
 from block import Block
+
 
 
 name = "MainState"
 
-boy = None
-map = None
+import server
 block = []
-balls = []
-big_balls = []
+
+
 
 
 def collide(a, b):
@@ -36,18 +37,15 @@ def collide(a, b):
 
 
 def enter():
-    global boy
-    boy = Boy()
-    game_world.add_object(boy, 1)
 
-    global map
-    map = Map()
-    map.setting()
-    game_world.add_object(map, 0)
+    server.boy = Boy()
+    game_world.add_object(server.boy, 1)
 
-    global balls
-    balls = [Ball() for i in range(10)] + [BigBall() for i in range(10)]
-    game_world.add_objects(balls, 1)
+
+    server.map = Map()
+    server.map.setting()
+    game_world.add_object(server.map, 0)
+
 
 
 
@@ -71,23 +69,40 @@ def handle_events():
         if event.type == SDL_QUIT:
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
-                game_framework.quit()
+            game_framework.change_state(ending)
         else:
-            boy.handle_event(event)
+            server.boy.handle_event(event)
 
 
 def update():
+    bgm = load_music('Sound\\clear.mp3')
+    bgm.set_volume(32)
+    dgm = load_music('Sound\\enemy_die.mp3')
+    dgm.set_volume(32)
     for game_object in game_world.all_objects():
         game_object.update()
 
-    for ball in balls:
-        if collide(boy, ball):
-            balls.remove(ball)
-            game_world.remove_object(ball)
-    for ball in balls:
-        for b in map.blocks:
-            if collide(b, ball):
-                ball.stop()
+
+    for b in server.map.blocks:
+        if collide(b, server.boy):
+            if b.data == '3':
+                b1, b2, b3, b4 = server.boy.get_bb()  # 왼 아래 우 상
+                b5, b6, b7, b8 = b.get_bb()  # 왼 아래 우 상
+                if b1 < b5:
+                    server.boy.setpos(b5 - b1, 0)
+                elif b3 > b7:
+                    server.boy.setpos(b7 - b3, 0)
+                server.boy.setpos(0, b8 - b2)
+
+
+            if b.data == 'X':
+                bgm.play(1)
+                game_framework.change_state(ending)
+            if b.data == 'G':
+                dgm.play()
+                b.c = 1
+
+
 
 
 

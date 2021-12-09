@@ -3,7 +3,8 @@ from pico2d import *
 from ball import Ball
 
 import game_world
-
+import server
+import collide
 # Boy Run Speed
 PIXEL_PER_METER = (4.0 / 0.2)  # 10 pixel 30 cm
 RUN_SPEED_KMPH = 50.0  # Km / Hour
@@ -19,14 +20,15 @@ FRAMES_PER_ACTION = 4
 
 
 # Boy Event
-RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, SPACE = range(5)
+RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, SPACE,JUMP = range(6)
 
 key_event_table = {
     (SDL_KEYDOWN, SDLK_RIGHT): RIGHT_DOWN,
     (SDL_KEYDOWN, SDLK_LEFT): LEFT_DOWN,
     (SDL_KEYUP, SDLK_RIGHT): RIGHT_UP,
     (SDL_KEYUP, SDLK_LEFT): LEFT_UP,
-    (SDL_KEYDOWN, SDLK_SPACE): SPACE
+    (SDL_KEYDOWN, SDLK_SPACE): SPACE,
+    (SDL_KEYDOWN, SDLK_a): JUMP
 }
 
 
@@ -43,15 +45,18 @@ class IdleState:
             boy.velocity -= RUN_SPEED_PPS
         elif event == LEFT_UP:
             boy.velocity += RUN_SPEED_PPS
+        elif event == JUMP:
+            boy.jump += 1
         boy.timer = 1000
+        boy.state =0
 
     def exit(boy, event):
         if event == SPACE:
-            boy.jump()
+            boy.fire_ball()
+
 
     def do(boy):
         pass
-
 
     def draw(boy):
         if boy.dir == 1:
@@ -71,17 +76,21 @@ class RunState:
             boy.velocity -= RUN_SPEED_PPS
         elif event == LEFT_UP:
             boy.velocity += RUN_SPEED_PPS
+        elif event == JUMP:
+            boy.jump += 1
         boy.dir = clamp(-1, boy.velocity, 1)
+        boy.state = 1
 
     def exit(boy, event):
         if event == SPACE:
-            boy.isjump = 1
+            boy.fire_ball()
+
 
     def do(boy):
         #boy.frame = (boy.frame + 1) % 8
         boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
         boy.x += boy.velocity * game_framework.frame_time
-        boy.x = clamp(25, boy.x, 1600 - 25)
+        boy.x = clamp(20, boy.x, 810)
 
     def draw(boy):
         if boy.dir == 1:
@@ -95,8 +104,8 @@ class RunState:
 
 
 next_state_table = {
-    IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState, RIGHT_DOWN: RunState, LEFT_DOWN: RunState},
-    RunState: {RIGHT_UP: IdleState, LEFT_UP: IdleState, LEFT_DOWN: IdleState, RIGHT_DOWN: IdleState}
+    IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState, RIGHT_DOWN: RunState, LEFT_DOWN: RunState,SPACE:IdleState,JUMP:IdleState},
+    RunState: {RIGHT_UP: IdleState, LEFT_UP: IdleState, LEFT_DOWN: IdleState, RIGHT_DOWN: IdleState,SPACE:RunState,JUMP:RunState}
 
 }
 
@@ -113,12 +122,22 @@ class Boy:
         self.w = 40  # 캐릭터 크기
         self.h = 80
         self.frame = 0
-        self.power = 10
-        self.pd = 0  # power dir
-        self.isjump=0
+        self.jump = 0  # jump 를 했나, 안했나 판단.
+        self.i = 100  # jump 의 i 상수
+        self.jumpPoint = self.y  # jump 를 하는 위치
+        self.highPoint = 200  # jump 높이
+        self.state = 0
         self.event_que = []
         self.cur_state = IdleState
         self.cur_state.enter(self, None)
+        self.hit_bgm = load_music('Sound\\fire_ball.mp3')
+        self.hit_bgm.set_volume(32)
+        self.bgm = load_music('Sound\\main_bgm.mp3')
+        self.bgm.set_volume(32)
+        self.bgm.repeat_play()
+
+
+
 
     def get_bb(self):
        return self.x-20,self.y-40,self.x+20,self.y+40
@@ -127,24 +146,29 @@ class Boy:
         self.event_que.insert(0, event)
 
     def update(self):
+        t = self.i / 100
+        self.y = (2 * t ** 2 - 3 * t + 1) * self.jumpPoint + (-4 * t ** 2 + 4 * t) * (
+                    self.jumpPoint + self.highPoint) + (2 * t ** 2 - t) * self.jumpPoint
+        if self.jump == 0:
+            self.i = 0
+        else:
+            self.i += 0.7
+
+        if self.y < 110:
+            self.y = 110
+            self.jump=0
+
         self.cur_state.do(self)
         if len(self.event_que) > 0:
             event = self.event_que.pop()
             self.cur_state.exit(self, event)
             self.cur_state = next_state_table[self.cur_state][event]
             self.cur_state.enter(self, event)
-        if self.isjump:
-            if self.power < 20:
-                self.power += 1
-            if self.y >= 210:
-                self.isjump = 0
-            if self.y <= 110:
-                self.y = 110
-                self.pd = 0
-            else:
-                self.pd = -1
 
-        self.y += self.pd * self.power
+    def setpos(self, x, y):
+        self.x += x
+        self.y += y
+
 
     def draw(self):
         self.cur_state.draw(self)
@@ -156,4 +180,13 @@ class Boy:
         if (event.type, event.key) in key_event_table:
             key_event = key_event_table[(event.type, event.key)]
             self.add_event(key_event)
+
+    def fire_ball(self):
+        server.ball = Ball(self.x,self.y,self.dir*20)
+        self.bgm.pause()
+        self.hit_bgm.play()
+        game_world.add_object(server.ball,1)
+        self.bgm.resume()
+
+
 

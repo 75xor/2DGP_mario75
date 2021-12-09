@@ -1,8 +1,10 @@
 from pico2d import *
+from main_state import *
 import game_world
 import game_framework
 import random
-
+import server
+import collide
 class Block:
     def __init__(self):
         self.block0 = load_image('리소스\\block0.png')
@@ -15,6 +17,9 @@ class Block:
         self.blockC = load_image('리소스\\blockC.png')
         self.blockD = load_image('리소스\\blockD.png')
         self.Qblock = load_image('리소스\\Qblock.png')
+        self.Gumba = load_image('리소스\\enemy1.png')
+        self.box = load_image('리소스\\box.png')
+        self.c=0
         self.x, self.y = 0, 0
         self.data = '0'
 
@@ -39,9 +44,16 @@ class Block:
             self.blockD.draw(self.x, self.y, 40, 40)
         elif self.data == 'Q':
             self.Qblock.draw(self.x, self.y, 40, 40)
-        draw_rectangle(*self.get_bb())
+        elif self.data == 'G':
+            if self.c ==1:
+                self.block0.draw(self.x, self.y, 40, 40)
+            else:
+                self.Gumba.draw(self.x, self.y, 40, 40)
+        elif self.data == 'X':
+            self.box.draw(self.x, self.y, 40, 40)
 
-    def setting(self, x, y, data):
+
+    def setting(self, x, y,data):
         self.x, self.y = x, y
         self.data = data
     def get_bb(self):
@@ -52,5 +64,7 @@ class Block:
 
     def update(self):
         pass
+
+
 
 
